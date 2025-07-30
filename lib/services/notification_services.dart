@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -56,6 +57,7 @@ class NotificationService {
       },
     );
 
+
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       debugPrint(
           "\nForground message notification: ${message.notification?.title} "
@@ -98,7 +100,7 @@ class NotificationService {
 
   Future<String> getDeviceToken() async {
     String token = await messaging.getToken() ?? "";
-    debugPrint('FirebaseToken: $token');
+    log('FirebaseToken: $token');
     return token;
   }
 }

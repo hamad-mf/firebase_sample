@@ -1,142 +1,98 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_sample/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Map<String, String>> students = [];
-  final Stream<QuerySnapshot> _studentsStream =
-      FirebaseFirestore.instance.collection('students').snapshots();
-
-  void _addOrEditStudent({Map<String, String>? student, int? index}) {
-    final nameController = TextEditingController(text: student?['name'] ?? '');
-    final phoneController =
-        TextEditingController(text: student?['phone'] ?? '');
-    final courseController =
-        TextEditingController(text: student?['course'] ?? '');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            right: 16.0,
-            top: 16.0,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16.0,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(labelText: 'Name'),
-              ),
-              TextField(
-                controller: phoneController,
-                decoration: InputDecoration(labelText: 'Phone'),
-                keyboardType: TextInputType.phone,
-              ),
-              TextField(
-                controller: courseController,
-                decoration: InputDecoration(labelText: 'Course'),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  final newStudent = {
-                    'name': nameController.text,
-                    'phone': phoneController.text,
-                    'course': courseController.text,
-                  };
-                  if (index != null) {
-                    setState(() {
-                      students[index] = newStudent;
-                    });
-                  } else {
-                    setState(() {
-                      students.add(newStudent);
-                    });
-                  }
-                  Navigator.of(ctx).pop();
-                },
-                child: Text(index == null ? 'Add Student' : 'Update Student'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _deleteStudent(int index) {
-    setState(() {
-      students.removeAt(index);
-    });
-  }
+  User? get currentUser => FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Student Manager'),actions: [IconButton(onPressed: () async {
-        await FirebaseAuth.instance.signOut();
-      }, icon: Icon(Icons.ac_unit))],),
-      body: StreamBuilder(
-        stream: _studentsStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: const Text('Something went wrong'));
-            
-          }
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              await GoogleSignIn().signOut();
+              await GoogleSignIn().disconnect();
+              // Optional: Navigate back to login screen
+              // Navigator.pushReplacement(...);
+            },
+            icon: const Icon(Icons.exit_to_app),
+          )
+        ],
+        title: const Text("Home Screen"),
+      ),
+      body: Center(
+        child: currentUser == null
+            ? const Text("Not logged in")
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      // Use the initialized global notification service to show test notification
+                      if (globalNotificationService != null) {
+                        await globalNotificationService!.showTestNotification();
+                      } else {
+                        // Optionally show a log or message if service is not initialized
+                        print("NotificationService not initialized");
+                      }
+                    },
+                    child: const Text("Show Test Notification"),
+                  ),
+                  // Profile Picture
+                  if (currentUser!.photoURL != null)
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage: NetworkImage(currentUser!.photoURL!),
+                    ),
+                  const SizedBox(height: 20),
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasData) {
-            return ListView.builder(
-              itemCount: snapshot.data!.docs.length,
-              itemBuilder: (ctx, index) {
-                final studentlist = snapshot.data!.docs;
+                  // Display Name
+                  if (currentUser!.displayName != null)
+                    Text(
+                      currentUser!.displayName!,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
 
-                return Card(
-                  margin: EdgeInsets.all(10),
-                  child: ListTile(
-                    title: Text(studentlist[index]["name"]),
-                    subtitle: Text(
-                        'Phone: ${studentlist[index]["ph"] ?? ''}\nCourse: ${studentlist[index]["sub"] ?? ''}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                            icon: Icon(Icons.edit),
-                            onPressed: () {
-                              _addOrEditStudent(student: {}, index: index);
-                            }),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: () => _deleteStudent(index),
-                        ),
-                      ],
+                  // Email
+                  Text(
+                    currentUser!.email ?? "No email",
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+
+                  // UID
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: Text(
+                      "UID: ${currentUser!.uid}",
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ),
-                );
-              },
-            );
-          }
 
-          return Center(
-            child: CircularProgressIndicator(),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _addOrEditStudent(),
-        child: Icon(Icons.add),
+                  // Email Verification Status
+                  if (currentUser!.emailVerified)
+                    const Chip(
+                      label: Text("Verified"),
+                      backgroundColor: Colors.green,
+                    )
+                  else
+                    TextButton(
+                      onPressed: () => currentUser!.sendEmailVerification(),
+                      child: const Text("Verify Email"),
+                    ),
+                ],
+              ),
       ),
     );
   }

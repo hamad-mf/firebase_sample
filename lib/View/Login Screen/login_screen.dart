@@ -76,7 +76,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               builder: (context) => RegistrationScreen(),
                             ));
                       },
-                      child: Text("Don't have an account, Register Now"))
+                      child: Text("Don't have an account, Register Now")),
+                      ElevatedButton(
+  onPressed: () async {
+    await context.read<LoginScreenController>().signInWithGoogle();
+  },
+  child: Text('Sign in with Google'),
+),
+
                 ],
               ),
             ),

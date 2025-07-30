@@ -1,8 +1,8 @@
 // splash_screen.dart
 import 'dart:async';
 import 'package:firebase_sample/View/Login%20Screen/login_screen.dart';
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
