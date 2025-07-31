@@ -11,8 +11,8 @@ import 'package:provider/provider.dart';
 
 /// NotificationService handles all notification logic
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin
+      _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   /// Initialize local notification plugin and create channels
   Future<void> initialize() async {
@@ -22,7 +22,8 @@ class NotificationService {
     const AndroidInitializationSettings androidInitializationSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: androidInitializationSettings,
     );
 
@@ -42,8 +43,8 @@ class NotificationService {
   Future<void> _createNotificationChannels() async {
     log("📡 Creating multiple notification channels...");
 
-    final androidImplementation = _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
+    final androidImplementation =
+        _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
 
     // job_accept
@@ -154,7 +155,8 @@ class NotificationService {
       styleInformation: BigTextStyleInformation(body),
     );
 
-    final details = NotificationDetails(android: androidDetails);
+    final NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidDetails);
 
     final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     try {
@@ -162,7 +164,7 @@ class NotificationService {
         id,
         title,
         body,
-        details,
+        platformChannelSpecifics,
         payload: 'custom_notification_payload',
       );
       log("✅ Notification shown successfully on $channelId");
@@ -174,9 +176,9 @@ class NotificationService {
   /// Test notification for debugging
   Future<void> showTestNotification() async {
     await showCustomNotification(
-      type: 'job_accept',
+      type: 'job_taken',
       title: 'Test Notification',
-      body: 'Testing job_accept channel',
+      body: 'Testing job_taken channel',
     );
   }
 
@@ -199,7 +201,9 @@ class NotificationService {
     });
 
     // Terminated
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    FirebaseMessaging.instance
+        .getInitialMessage()
+        .then((RemoteMessage? message) {
       if (message != null) _handleNotificationTap(message);
     });
   }
@@ -229,7 +233,8 @@ Future<void> main() async {
 
 /// Request notification permissions
 Future<void> _requestNotificationPermissions() async {
-  NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+  NotificationSettings settings =
+      await FirebaseMessaging.instance.requestPermission(
     alert: true,
     badge: true,
     sound: true,
@@ -269,7 +274,8 @@ class AppWrapper extends StatelessWidget {
         children: [
           Expanded(child: SplashScreen()),
           if (globalNotificationService != null)
-            TestNotificationButton(notificationService: globalNotificationService!),
+            TestNotificationButton(
+                notificationService: globalNotificationService!),
         ],
       ),
     );
@@ -279,7 +285,8 @@ class AppWrapper extends StatelessWidget {
 /// Test Button
 class TestNotificationButton extends StatelessWidget {
   final NotificationService notificationService;
-  const TestNotificationButton({Key? key, required this.notificationService}) : super(key: key);
+  const TestNotificationButton({Key? key, required this.notificationService})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
